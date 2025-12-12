@@ -23,10 +23,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Build participants list HTML
         const participantsList = details.participants
-          .map(
-            (email) =>
-              `<li class="participant-item"><span class="participant-badge">${email}</span></li>`
-          )
+          .map((email) => {
+            const encodedActivity = encodeURIComponent(name);
+            const encodedEmail = encodeURIComponent(email);
+            return `
+              <li class="participant-item">
+                <span class="participant-badge">${email}</span>
+                <button
+                  class="participant-remove"
+                  title="Unregister ${email}"
+                  aria-label="Unregister ${email}"
+                  data-activity="${encodedActivity}"
+                  data-email="${encodedEmail}"
+                >🗑️</button>
+              </li>`;
+          })
           .join("");
 
         activityCard.innerHTML = `
@@ -83,6 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities to reflect new participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -104,4 +117,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Handle participant removal via event delegation
+  activitiesList.addEventListener("click", async (event) => {
+    const btn = event.target.closest(".participant-remove");
+    if (!btn) return;
+
+    const activity = decodeURIComponent(btn.dataset.activity || "");
+    const email = decodeURIComponent(btn.dataset.email || "");
+    if (!activity || !email) return;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(
+          activity
+        )}/unregister?email=${encodeURIComponent(email)}`,
+        { method: "POST" }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+        fetchActivities();
+      } else {
+        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.className = "error";
+      }
+
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+    } catch (error) {
+      messageDiv.textContent = "Failed to unregister. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      console.error("Error unregistering:", error);
+    }
+  });
 });

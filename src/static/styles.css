@@ -189,3 +189,21 @@ footer {
 .participant-badge:hover {
   transform: translateY(-1px);
 }
+
+/* Delete/unregister button */
+.participant-remove {
+  margin-left: 6px;
+  background: transparent;
+  color: #c62828;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+  opacity: 0.85;
+}
+
+.participant-remove:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
